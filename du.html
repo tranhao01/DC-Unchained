@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phân Tích Kỹ Thuật Game DC Unchained</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: DevAnalyse Warm Neutral -->
+    <!-- Application Structure Plan: Ứng dụng được thiết kế dưới dạng một trang duy nhất (SPA) với thanh điều hướng cố định bên trái và vùng nội dung chính. Cấu trúc này mô phỏng một công cụ dashboard dành cho dev, cho phép người dùng chuyển đổi qua lại giữa các "lớp" phân tích (Client, Server, Gameplay, etc.) một cách liền mạch. Lựa chọn này giúp tổ chức thông tin phức tạp thành các phần riêng biệt, dễ quản lý, phù hợp với quy trình làm việc của một nhà phát triển khi phân tích một hệ thống. Tương tác chính là chọn mục từ sidebar để cập nhật nội dung, và click vào các thẻ thông tin để xem chi tiết, khuyến khích sự khám phá chủ động. -->
+    <!-- Visualization & Content Choices: 1. Biểu đồ Phân bổ Nỗ lực (Tổng Quan): Dùng biểu đồ cột ngang của Chart.js để thể hiện mức độ phức tạp/nỗ lực ước tính cho từng hạng mục phân tích. Mục tiêu: Giúp người xem có cái nhìn tổng quan về quy mô dự án. Tương tác: Hover để xem chi tiết. 2. Sơ đồ Kiến trúc Client-Server (Server & Mạng): Dùng các thẻ div và Tailwind CSS để vẽ một sơ đồ khối đơn giản. Mục tiêu: Trực quan hóa mối quan hệ giữa các thành phần hệ thống. Tương tác: Click vào một khối để làm nổi bật và hiển thị mô tả chi tiết. Lựa chọn này tốt hơn văn bản thuần túy vì nó truyền tải cấu trúc hệ thống một cách nhanh chóng. 3. Thẻ Thông tin Tương tác (Tất cả các mục): Mỗi điểm trong checklist được trình bày dưới dạng một thẻ card. Mục tiêu: Phân tách thông tin thành các đơn vị nhỏ, dễ đọc. Tương tác: Click vào thẻ để hiển thị các công cụ và phương pháp đề xuất, cung cấp thông tin sâu hơn mà không làm rối giao diện ban đầu. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .nav-link {
+            transition: all 0.2s ease-in-out;
+        }
+        .nav-link.active {
+            background-color: #e0f2fe;
+            color: #0c4a6e;
+            font-weight: 600;
+        }
+        .nav-link:hover {
+            background-color: #f1f5f9;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .info-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .info-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .card-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+        }
+        .info-card.open .card-details {
+            max-height: 500px;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+<div class="flex h-screen bg-gray-100">
+    <aside class="w-64 bg-white shadow-md flex-shrink-0">
+        <div class="p-6">
+            <h1 class="text-xl font-bold text-gray-800">DC Unchained</h1>
+            <p class="text-sm text-gray-500">Dev Analysis Dashboard</p>
+        </div>
+        <nav class="mt-4">
+            <a href="#overview" class="nav-link active flex items-center py-3 px-6 text-gray-600">
+                <span class="mr-3">📊</span> Tổng Quan
+            </a>
+            <a href="#client" class="nav-link flex items-center py-3 px-6 text-gray-600">
+                <span class="mr-3">📱</span> Client-Side
+            </a>
+            <a href="#network" class="nav-link flex items-center py-3 px-6 text-gray-600">
+                <span class="mr-3">☁️</span> Server & Mạng
+            </a>
+            <a href="#data" class="nav-link flex items-center py-3 px-6 text-gray-600">
+                <span class="mr-3">🗃️</span> Data Layer
+            </a>
+            <a href="#gameplay" class="nav-link flex items-center py-3 px-6 text-gray-600">
+                <span class="mr-3">🎮</span> Gameplay & Kinh Tế
+            </a>
+            <a href="#monetization" class="nav-link flex items-center py-3 px-6 text-gray-600">
+                <span class="mr-3">💰</span> Vận Hành & Bảo Mật
+            </a>
+            <a href="#lessons" class="nav-link flex items-center py-3 px-6 text-gray-600">
+                <span class="mr-3">📚</span> Bài Học Rút Ra
+            </a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 p-6 md:p-10 overflow-y-auto">
+        <section id="overview" class="content-section active">
+            <h2 class="text-3xl font-bold mb-2">Tổng Quan Phân Tích Kỹ Thuật</h2>
+            <p class="text-gray-600 mb-8">
+                Đây là dashboard tổng hợp các hạng mục cần nghiên cứu về game DC Unchained dưới góc nhìn của một nhà phát triển. Mục tiêu là bóc tách các lớp kiến trúc, từ client-side đến backend, để hiểu rõ cách game được xây dựng và vận hành. Biểu đồ dưới đây thể hiện mức độ phức tạp và nỗ lực ước tính cho từng lĩnh vực.
+            </p>
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <h3 class="text-xl font-semibold mb-4">Phân Bổ Nỗ Lực Nghiên Cứu</h3>
+                <div class="chart-container">
+                    <canvas id="effortChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="client" class="content-section">
+            <h2 class="text-3xl font-bold mb-2">Phân Tích Client-Side</h2>
+             <p class="text-gray-600 mb-8">
+                Lớp client là phần mềm chạy trực tiếp trên thiết bị của người chơi. Việc phân tích client tập trung vào việc giải mã ứng dụng, kiểm tra engine đồ họa, tài nguyên game và đo lường hiệu năng. Đây là bước đầu tiên để hiểu được nền tảng công nghệ của game.
+            </p>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="info-card bg-white p-5 rounded-lg shadow">
+                    <h3 class="font-bold text-lg mb-2">📦 Nền tảng & Engine</h3>
+                    <p class="text-sm text-gray-600">Xác định nền tảng (Android/iOS) và engine game (Unity/Unreal) thông qua cấu trúc file.</p>
+                    <div class="card-details mt-4 border-t pt-3">
+                        <h4 class="font-semibold text-sm">Công cụ đề xuất:</h4>
+                        <ul class="list-disc list-inside text-sm text-gray-500 mt-1">
+                            <li>APK/IPA Unpacker</li>
+                            <li>File manager</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="info-card bg-white p-5 rounded-lg shadow">
+                    <h3 class="font-bold text-lg mb-2">🔍 Reverse Engineering</h3>
+                    <p class="text-sm text-gray-600">Dịch ngược mã nguồn để phân tích logic, kiểm tra các thư viện native (.so) và các biện pháp bảo vệ.</p>
+                    <div class="card-details mt-4 border-t pt-3">
+                        <h4 class="font-semibold text-sm">Công cụ đề xuất:</h4>
+                        <ul class="list-disc list-inside text-sm text-gray-500 mt-1">
+                            <li>apktool, jadx, Ghidra</li>
+                            <li>IL2CSpy (for Unity IL2CPP)</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="info-card bg-white p-5 rounded-lg shadow">
+                    <h3 class="font-bold text-lg mb-2">🎨 Graphics & Assets</h3>
+                    <p class="text-sm text-gray-600">Kiểm tra định dạng tài nguyên (texture, model, animation) để xác định quy trình xử lý đồ họa.</p>
+                     <div class="card-details mt-4 border-t pt-3">
+                        <h4 class="font-semibold text-sm">Công cụ đề xuất:</h4>
+                        <ul class="list-disc list-inside text-sm text-gray-500 mt-1">
+                            <li>Unity Asset Studio</li>
+                            <li>UnrealPak</li>
+                        </ul>
+                    </div>
+                </div>
+                 <div class="info-card bg-white p-5 rounded-lg shadow">
+                    <h3 class="font-bold text-lg mb-2">🖥️ Performance Profiling</h3>
+                    <p class="text-sm text-gray-600">Đo lường FPS, mức sử dụng bộ nhớ, và hiệu năng GPU trên nhiều thiết bị khác nhau.</p>
+                     <div class="card-details mt-4 border-t pt-3">
+                        <h4 class="font-semibold text-sm">Công cụ đề xuất:</h4>
+                        <ul class="list-disc list-inside text-sm text-gray-500 mt-1">
+                            <li>Unity Profiler, Android Studio Profiler</li>
+                            <li>GPUWatch / Snapdragon Profiler</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="network" class="content-section">
+            <h2 class="text-3xl font-bold mb-2">Phân Tích Server & Mạng</h2>
+            <p class="text-gray-600 mb-8">
+                Mọi hành động trong game online đều được xử lý thông qua giao tiếp mạng với server. Phần này tập trung vào việc phân tích các gói tin, xác định kiến trúc backend và các biện pháp bảo mật mạng được áp dụng để đảm bảo tính toàn vẹn của game.
+            </p>
+            <div class="grid md:grid-cols-2 gap-6">
+                 <div class="info-card bg-white p-5 rounded-lg shadow">
+                    <h3 class="font-bold text-lg mb-2">🌐 Phân Tích Traffic</h3>
+                    <p class="text-sm text-gray-600">Bắt và phân tích các gói tin để hiểu giao thức giao tiếp (HTTPs, Protobuf), API endpoints và luồng dữ liệu.</p>
+                    <div class="card-details mt-4 border-t pt-3">
+                        <h4 class="font-semibold text-sm">Công cụ đề xuất:</h4>
+                        <ul class="list-disc list-inside text-sm text-gray-500 mt-1">
+                            <li>Fiddler, Charles Proxy, Wireshark</li>
+                            <li>Burp Suite</li>
+                        </ul>
+                    </div>
+                </div>
+                 <div class="info-card bg-white p-5 rounded-lg shadow">
+                    <h3 class="font-bold text-lg mb-2">☁️ Hạ Tầng Backend</h3>
+                    <p class="text-sm text-gray-600">Dự đoán nhà cung cấp đám mây (AWS, GCP), kiểm tra CDN, và cơ chế cân bằng tải.</p>
+                    <div class="card-details mt-4 border-t pt-3">
+                        <h4 class="font-semibold text-sm">Phương pháp:</h4>
+                        <ul class="list-disc list-inside text-sm text-gray-500 mt-1">
+                            <li>Tra cứu DNS, WHOIS</li>
+                            <li>Kiểm tra header phản hồi HTTP</li>
+                        </ul>
+                    </div>
+                </div>
+                 <div class="info-card bg-white p-5 rounded-lg shadow">
+                    <h3 class="font-bold text-lg mb-2">🔒 Bảo Mật Mạng</h3>
+                    <p class="text-sm text-gray-600">Kiểm tra các cơ chế bảo mật như certificate pinning và mã hóa gói tin để chống tấn công Man-in-the-middle.</p>
+                    <div class="card-details mt-4 border-t pt-3">
+                        <h4 class="font-semibold text-sm">Công cụ đề xuất:</h4>
+                        <ul class="list-disc list-inside text-sm text-gray-500 mt-1">
+                            <li>Frida, Objection</li>
+                            <li>SSLUnpinning scripts</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="data" class="content-section">
+            <h2 class="text-3xl font-bold mb-2">Phân Tích Lớp Dữ Liệu (Data Layer)</h2>
+            <p class="text-gray-600 mb-8">
+                Dữ liệu là xương sống của game, bao gồm thông tin người chơi, cấu hình game và trạng thái trò chơi. Phân tích lớp dữ liệu giúp chúng ta hiểu cách game lưu trữ, quản lý và đồng bộ hóa thông tin giữa client và server.
+            </p>
+             <div class="grid md:grid-cols-2 gap-6">
+                <div class="info-card bg-white p-5 rounded-lg shadow">
+                    <h3 class="font-bold text-lg mb-2">📂 Lưu Trữ Cục Bộ</h3>
+                    <p class="text-sm text-gray-600">Tìm kiếm dữ liệu được lưu trên thiết bị như SharedPreferences, SQLite, hoặc các file cache.</p>
+                    <div class="card-details mt-4 border-t pt-3">
+                        <h4 class="font-semibold text-sm">Phương pháp:</h4>
+                        <ul class="list-disc list-inside text-sm text-gray-500 mt-1">
+                            <li>Sử dụng ADB để truy cập file hệ thống</li>
+                            <li>Phân tích cấu trúc thư mục ứng dụng</li>
+                        </ul>
+                    </div>
+                </div>
+                 <div class="info-card bg-white p-5 rounded-lg shadow">
+                    <h3 class="font-bold text-lg mb-2">📊 Dữ Liệu Kinh Tế Game</h3>
+                    <p class="text-sm text-gray-600">Phân tích các file cấu hình (JSON/XML) để hiểu cách thiết kế vật phẩm, anh hùng, và cây kỹ năng.</p>
+                    <div class="card-details mt-4 border-t pt-3">
+                        <p class="text-sm text-gray-500">Thường được cập nhật qua các bản vá nhỏ từ server, không cần update qua store.</p>
+                    </div>
+                </div>
+                 <div class="info-card bg-white p-5 rounded-lg shadow">
+                    <h3 class="font-bold text-lg mb-2">🔄 Cơ Chế Đồng Bộ</h3>
+                    <p class="text-sm text-gray-600">Nghiên cứu cách game xử lý việc tự động lưu, rollback khi có lỗi, và xử lý khi mất kết nối.</p>
+                     <div class="card-details mt-4 border-t pt-3">
+                        <p class="text-sm text-gray-500">Đây là yếu tố quan trọng để đảm bảo trải nghiệm người dùng liền mạch.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="gameplay" class="content-section">
+            <h2 class="text-3xl font-bold mb-2">Phân Tích Gameplay & Kinh Tế</h2>
+            <p class="text-gray-600 mb-8">
+                Trọng tâm của bất kỳ game nào là cơ chế gameplay và hệ thống kinh tế. Phần này đi sâu vào việc phân tích vòng lặp cốt lõi (core loop), hệ thống tiến trình của người chơi, và cách nhà phát triển cân bằng game để tạo ra trải nghiệm hấp dẫn và bền vững.
+            </p>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="info-card bg-white p-5 rounded-lg shadow">
+                    <h3 class="font-bold text-lg mb-2">⚙️ Vòng Lặp Cốt Lõi (Core Loop)</h3>
+                    <p class="text-sm text-gray-600">Phân tích chu trình: Đánh → Farm → Nâng cấp → PvP/PvE. Nghiên cứu hệ thống năng lượng (energy system).</p>
+                </div>
+                 <div class="info-card bg-white p-5 rounded-lg shadow">
+                    <h3 class="font-bold text-lg mb-2">📈 Hệ Thống Tiến Trình</h3>
+                    <p class="text-sm text-gray-600">Nghiên cứu đường cong lên cấp (EXP), chi phí nâng cấp kỹ năng, và tỷ lệ gacha để hiểu tốc độ phát triển của người chơi.</p>
+                </div>
+                 <div class="info-card bg-white p-5 rounded-lg shadow">
+                    <h3 class="font-bold text-lg mb-2">🕹️ Điều Khiển & UX</h3>
+                    <p class="text-sm text-gray-600">Kiểm tra logic điều khiển, camera, và các kịch bản AI của kẻ địch để đánh giá trải nghiệm người dùng.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="monetization" class="content-section">
+            <h2 class="text-3xl font-bold mb-2">Vận Hành (LiveOps) & Bảo Mật</h2>
+             <p class="text-gray-600 mb-8">
+                Game as a Service (GaaS) đòi hỏi việc vận hành liên tục và các biện pháp bảo mật mạnh mẽ. Chúng ta sẽ xem xét cách game kiếm tiền, giữ chân người chơi thông qua các sự kiện, và các công nghệ chống gian lận được tích hợp.
+            </p>
+             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="info-card bg-white p-5 rounded-lg shadow">
+                    <h3 class="font-bold text-lg mb-2">💰 Mua Sắm Trong Game (IAP)</h3>
+                    <p class="text-sm text-gray-600">Kiểm tra API thanh toán, ID vật phẩm, và logic định giá các gói vật phẩm.</p>
+                </div>
+                 <div class="info-card bg-white p-5 rounded-lg shadow">
+                    <h3 class="font-bold text-lg mb-2">🎟️ Sự Kiện & Giữ Chân Người Chơi</h3>
+                    <p class="text-sm text-gray-600">Phân tích các sự kiện, phần thưởng đăng nhập, và thông báo đẩy để hiểu chiến lược giữ chân người chơi.</p>
+                </div>
+                 <div class="info-card bg-white p-5 rounded-lg shadow">
+                    <h3 class="font-bold text-lg mb-2">🛡️ Chống Gian Lận (Anti-Cheat)</h3>
+                    <p class="text-sm text-gray-600">Kiểm tra các cơ chế phát hiện root, chặn giả lập, và ngăn chặn can thiệp vào gói tin.</p>
+                     <div class="card-details mt-4 border-t pt-3">
+                         <p class="text-sm text-gray-500">Đây là cuộc chiến không ngừng nghỉ giữa nhà phát triển và hacker.</p>
+                     </div>
+                </div>
+                <div class="info-card bg-white p-5 rounded-lg shadow">
+                    <h3 class="font-bold text-lg mb-2">🔄 Hệ Thống Cập Nhật (Patch)</h3>
+                    <p class="text-sm text-gray-600">Nghiên cứu cách game tải các bản vá nhỏ qua CDN và xác thực chúng, cho phép hotfix nhanh chóng.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="lessons" class="content-section">
+            <h2 class="text-3xl font-bold mb-2">Bài Học Rút Ra & Rủi Ro</h2>
+            <p class="text-gray-600 mb-8">
+                Tổng kết lại quá trình nghiên cứu, phần này nêu bật những bài học quý giá dành cho nhà phát triển game khác, cũng như các rủi ro pháp lý tiềm ẩn khi thực hiện reverse engineering một sản phẩm có bản quyền.
+            </p>
+            <div class="space-y-6">
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="font-semibold text-xl text-sky-800 mb-2">📚 Bài Học Kỹ Thuật</h3>
+                    <ul class="list-disc list-inside space-y-2 text-gray-700">
+                        <li><span class="font-semibold">Kiến trúc Full-Authoritative Server:</span> Mọi logic quan trọng đều phải được xử lý ở server để chống gian lận. Client chỉ đóng vai trò hiển thị và gửi input.</li>
+                        <li><span class="font-semibold">Mã Hóa Toàn Diện:</span> Mã hóa tài sản (assets) và "ghim" chứng chỉ SSL (pinning) là tiêu chuẩn bắt buộc để bảo vệ game.</li>
+                        <li><span class="font-semibold">Tái sử dụng Mechanics:</span> Các cơ chế về vòng lặp gameplay và giữ chân người chơi có thể được điều chỉnh và áp dụng cho các dự án game khác.</li>
+                    </ul>
+                </div>
+                <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded-lg">
+                     <h3 class="font-semibold text-xl text-red-800 mb-2">🔒 Rủi Ro Pháp Lý</h3>
+                    <p class="text-red-700">
+                        Việc nghiên cứu một sản phẩm có bản quyền DC Comics cần được giới hạn ở mục đích học thuật và nghiên cứu cá nhân. Việc sao chép, tái sử dụng mã nguồn hoặc tài sản của game cho mục đích thương mại là vi phạm pháp luật và có thể dẫn đến hậu quả nghiêm trọng.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const navLinks = document.querySelectorAll('.nav-link');
+        const contentSections = document.querySelectorAll('.content-section');
+        const infoCards = document.querySelectorAll('.info-card');
+
+        const setActiveLink = (hash) => {
+            const targetHash = hash || '#overview';
+            navLinks.forEach(link => {
+                link.classList.toggle('active', link.hash === targetHash);
+            });
+            contentSections.forEach(section => {
+                section.classList.toggle('active', section.id === targetHash.substring(1));
+            });
+        };
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                window.location.hash = this.hash;
+            });
+        });
+
+        window.addEventListener('hashchange', () => setActiveLink(window.location.hash));
+        
+        setActiveLink(window.location.hash);
+
+        infoCards.forEach(card => {
+            card.addEventListener('click', () => {
+                card.classList.toggle('open');
+            });
+        });
+
+        const ctx = document.getElementById('effortChart').getContext('2d');
+        const effortChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Client-Side', 'Server & Mạng', 'Data Layer', 'Gameplay', 'Vận Hành & Bảo Mật'],
+                datasets: [{
+                    label: 'Mức Độ Phức Tạp (1-10)',
+                    data: [8, 9, 6, 7, 8],
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.7)',
+                        'rgba(16, 185, 129, 0.7)',
+                        'rgba(249, 115, 22, 0.7)',
+                        'rgba(239, 68, 68, 0.7)',
+                        'rgba(139, 92, 246, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(59, 130, 246, 1)',
+                        'rgba(16, 185, 129, 1)',
+                        'rgba(249, 115, 22, 1)',
+                        'rgba(239, 68, 68, 1)',
+                        'rgba(139, 92, 246, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        max: 10,
+                        grid: {
+                            color: '#e5e7eb'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#1f2937',
+                        titleFont: {
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            size: 14
+                        },
+                        callbacks: {
+                            label: function(context) {
+                                return ` Nỗ lực ước tính: ${context.raw}/10`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+</body>
+</html>

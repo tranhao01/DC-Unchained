@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infographic: Phân Tích Kỹ Thuật Game DC Unchained</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Energetic & Playful -->
+    <!-- Narrative & Structure Plan: Infographic được cấu trúc theo một luồng tường thuật logic, từ tổng quan đến chi tiết. Bắt đầu bằng một tiêu đề mạnh mẽ và giới thiệu. Phần 1 trực quan hóa kiến trúc cốt lõi (Client-Server-Data) bằng sơ đồ khối HTML/CSS. Phần 2 sử dụng biểu đồ cột để so sánh mức độ phức tạp của các lĩnh vực phân tích. Các phần tiếp theo đi sâu vào từng lĩnh vực (Client, Server, Gameplay...) sử dụng layout dạng thẻ card (grid) để trình bày thông tin chi tiết một cách ngăn nắp. Vòng lặp gameplay được thể hiện bằng biểu đồ Donut. Thêm một phần tương tác với Gemini AI để tạo ra các phân tích sâu hơn theo yêu cầu. Cuối cùng, phần kết luận tổng hợp các bài học quan trọng. Cấu trúc này dẫn dắt người xem qua một hành trình khám phá, giúp họ dễ dàng tiếp thu thông tin kỹ thuật phức tạp. -->
+    <!-- Visualization Choices: 1. Sơ đồ kiến trúc (Client-Server-Data): Goal - Organize. Chosen Viz - Sơ đồ khối bằng HTML/CSS (Flexbox, Borders). Justification - Trực quan hóa mối quan hệ giữa các thành phần chính, cung cấp cái nhìn tổng quan ngay từ đầu. (Method: HTML/CSS, NO SVG/Mermaid). 2. Phân bổ nỗ lực phân tích: Goal - Compare. Chosen Viz - Biểu đồ cột ngang (Bar Chart). Justification - Dễ dàng so sánh mức độ phức tạp/nỗ lực ước tính giữa các hạng mục. (Library: Chart.js/Canvas). 3. Vòng lặp gameplay cốt lõi: Goal - Inform/Organize. Chosen Viz - Biểu đồ Donut. Justification - Thể hiện một chu trình lặp lại một cách trực quan và hấp dẫn hơn là một danh sách. (Library: Chart.js/Canvas). 4. Các checklist chi tiết: Goal - Organize. Chosen Viz - Thẻ card với icon Unicode. Justification - Chia nhỏ thông tin thành các khối dễ đọc, cải thiện tính thẩm mỹ và khả năng quét thông tin. (Method: HTML/CSS). 5. Phân tích AI: Goal - Inform. Chosen Viz - Text block động. Justification - Cung cấp nội dung chuyên sâu, tạo sinh theo thời gian thực để tăng giá trị cho infographic. (Method: Gemini API Call). Tất cả các lựa chọn đều tuân thủ yêu cầu không sử dụng SVG và Mermaid JS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FEF9C3; /* yellow-100 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 40vh;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .flow-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #F97316; /* orange-500 */
+        }
+        .flow-box {
+            border: 3px solid #1E293B; /* slate-800 */
+            background-color: #ffffff;
+        }
+        .loader {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #F97316; /* Orange */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+    <div class="container mx-auto p-4 md:p-8 max-w-5xl">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-6xl font-extrabold text-slate-900 mb-2">DC UNCHAINED</h1>
+            <p class="text-xl md:text-2xl font-semibold text-orange-600">Bóc Tách Dưới Góc Nhìn Nhà Phát Triển</p>
+            <div class="w-24 h-1.5 bg-slate-900 mx-auto mt-4"></div>
+        </header>
+
+        <main>
+            <section class="mb-16">
+                <h2 class="text-3xl font-bold text-center mb-8">Kiến Trúc Hệ Thống Cốt Lõi</h2>
+                <p class="text-center max-w-3xl mx-auto text-slate-600 mb-10">
+                    Hầu hết các game online hiện đại đều tuân theo mô hình Client-Server. Client xử lý hiển thị và nhận lệnh từ người chơi, trong khi Server có toàn quyền quyết định logic game, đảm bảo tính công bằng và chống gian lận. Dữ liệu được đồng bộ liên tục giữa hai thành phần này.
+                </p>
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4 text-center">
+                    <div class="flow-box w-48 h-32 p-4 rounded-lg shadow-lg flex flex-col justify-center">
+                        <span class="text-4xl">📱</span>
+                        <h3 class="font-bold mt-2">CLIENT</h3>
+                        <p class="text-xs text-slate-500">(Thiết bị người chơi)</p>
+                    </div>
+                    <div class="flow-arrow w-24 h-16 transform md:-rotate-0 rotate-90">→</div>
+                    <div class="flow-box w-48 h-32 p-4 rounded-lg shadow-lg flex flex-col justify-center">
+                        <span class="text-4xl">☁️</span>
+                        <h3 class="font-bold mt-2">SERVER</h3>
+                        <p class="text-xs text-slate-500">(Hệ thống máy chủ)</p>
+                    </div>
+                </div>
+                <div class="flex justify-center">
+                     <div class="flow-arrow h-24 transform rotate-90">↓</div>
+                </div>
+                 <div class="flex justify-center text-center">
+                    <div class="flow-box w-48 h-32 p-4 rounded-lg shadow-lg flex flex-col justify-center">
+                        <span class="text-4xl">🗃️</span>
+                        <h3 class="font-bold mt-2">DATA LAYER</h3>
+                        <p class="text-xs text-slate-500">(Cơ sở dữ liệu)</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="bg-slate-800 text-white p-8 rounded-2xl shadow-2xl mb-16">
+                 <h2 class="text-3xl font-bold text-center mb-8 text-yellow-300">Phân Bổ Nỗ Lực Phân Tích</h2>
+                 <p class="text-center max-w-3xl mx-auto text-slate-300 mb-10">
+                    Quá trình "mổ xẻ" một game là một công việc phức tạp. Biểu đồ dưới đây ước tính mức độ khó và tốn thời gian cho từng hạng mục, trong đó việc phân tích gói tin mạng và các biện pháp chống gian lận thường là thách thức lớn nhất.
+                </p>
+                <div class="chart-container h-96 md:h-[450px]">
+                    <canvas id="effortChart"></canvas>
+                </div>
+            </section>
+
+            <section class="mb-16">
+                 <h2 class="text-3xl font-bold text-center mb-10">Phân Tích Chi Tiết Các Lớp</h2>
+                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-lg border-t-8 border-pink-500">
+                        <h3 class="font-bold text-xl mb-3">📱 CLIENT-SIDE</h3>
+                        <ul class="space-y-2 text-slate-600">
+                            <li><span class="font-semibold text-slate-800">Nền tảng:</span> Xác định Engine (Unity/Unreal).</li>
+                            <li><span class="font-semibold text-slate-800">Dịch ngược:</span> Phân tích mã nguồn bằng Jadx, Ghidra.</li>
+                            <li><span class="font-semibold text-slate-800">Tài sản:</span> Trích xuất đồ họa, âm thanh.</li>
+                            <li><span class="font-semibold text-slate-800">Hiệu năng:</span> Đo FPS, mức sử dụng bộ nhớ.</li>
+                        </ul>
+                    </div>
+                     <div class="bg-white p-6 rounded-lg shadow-lg border-t-8 border-orange-500">
+                        <h3 class="font-bold text-xl mb-3">☁️ SERVER & MẠNG</h3>
+                        <ul class="space-y-2 text-slate-600">
+                            <li><span class="font-semibold text-slate-800">Gói tin:</span> Bắt gói tin bằng Fiddler, Wireshark.</li>
+                            <li><span class="font-semibold text-slate-800">Giao thức:</span> Phân tích API (HTTPs/Protobuf).</li>
+                            <li><span class="font-semibold text-slate-800">Hạ tầng:</span> Dự đoán nhà cung cấp (AWS/GCP).</li>
+                             <li><span class="font-semibold text-slate-800">Bảo mật:</span> Kiểm tra SSL Pinning, mã hóa.</li>
+                        </ul>
+                    </div>
+                     <div class="bg-white p-6 rounded-lg shadow-lg border-t-8 border-lime-500">
+                        <h3 class="font-bold text-xl mb-3">🗃️ DATA LAYER</h3>
+                        <ul class="space-y-2 text-slate-600">
+                            <li><span class="font-semibold text-slate-800">Lưu trữ local:</span> Tìm dữ liệu trong SharedPreferences, SQLite.</li>
+                            <li><span class="font-semibold text-slate-800">Cấu hình game:</span> Phân tích file JSON/XML.</li>
+                            <li><span class="font-semibold text-slate-800">Đồng bộ:</span> Nghiên cứu cơ chế auto-save, rollback.</li>
+                        </ul>
+                    </div>
+                 </div>
+            </section>
+
+            <section class="mb-16">
+                <h2 class="text-3xl font-bold text-center mb-8">Vòng Lặp Gameplay & Kinh Tế</h2>
+                 <p class="text-center max-w-3xl mx-auto text-slate-600 mb-10">
+                    Để giữ chân người chơi, DC Unchained xây dựng một vòng lặp gameplay gây nghiện. Người chơi liên tục chiến đấu để thu thập tài nguyên, dùng chúng để nâng cấp anh hùng, rồi lại tiếp tục tham gia các trận chiến khó hơn.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <div class="chart-container h-80 md:h-96">
+                        <canvas id="gameplayLoopChart"></canvas>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <h4 class="font-bold">📈 HỆ THỐNG TIẾN TRÌNH</h4>
+                            <p class="text-sm text-slate-600">Đường cong kinh nghiệm (EXP curve) và chi phí nâng cấp được thiết kế để khuyến khích người chơi đăng nhập mỗi ngày.</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <h4 class="font-bold">💰 HỆ THỐNG VẬT PHẨM</h4>
+                            <p class="text-sm text-slate-600">Các chỉ số, tỷ lệ rớt đồ (loot rate) và hệ thống gacha được cân bằng cẩn thận để tạo ra giá trị và sự khan hiếm.</p>
+                        </div>
+                         <div class="bg-white p-4 rounded-lg shadow">
+                            <h4 class="font-bold">🛡️ CHỐNG GIAN LẬN</h4>
+                            <p class="text-sm text-slate-600">Server xác thực mọi hành động quan trọng, ngăn chặn các hành vi gian lận như thay đổi chỉ số vật phẩm hoặc tài nguyên.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="mb-16">
+                <h2 class="text-3xl font-bold text-center mb-4">✨ Phân Tích Sâu Hơn Cùng Gemini</h2>
+                <p class="text-center max-w-3xl mx-auto text-slate-600 mb-8">
+                    Sử dụng sức mạnh của AI để khám phá các chiến lược chuyên sâu. Chọn một chủ đề bên dưới để Gemini phân tích và đưa ra các đề xuất sáng tạo dựa trên bối cảnh của một game hành động-nhập vai như DC Unchained.
+                </p>
+                <div class="flex flex-wrap justify-center gap-4 mb-8">
+                    <button id="ai-cheat-btn" class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                        Chiến lược Chống Gian Lận
+                    </button>
+                    <button id="ai-economy-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                        Tối ưu Hóa Kinh Tế Game
+                    </button>
+                    <button id="ai-retention-btn" class="bg-lime-500 hover:bg-lime-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                        Giữ Chân Người Chơi
+                    </button>
+                </div>
+                <div id="ai-response-container" class="bg-white p-6 rounded-lg shadow-lg min-h-[200px] flex items-center justify-center">
+                    <div id="ai-placeholder" class="text-slate-500 text-center">
+                        <p class="text-lg">Chọn một chủ đề để bắt đầu phân tích...</p>
+                        <p class="text-sm mt-1">Kết quả sẽ được hiển thị ở đây.</p>
+                    </div>
+                    <div id="ai-loader" class="hidden">
+                         <div class="loader"></div>
+                    </div>
+                    <div id="ai-response" class="text-slate-700 whitespace-pre-wrap w-full"></div>
+                </div>
+            </section>
+
+            <section class="bg-slate-900 text-white p-8 rounded-2xl shadow-2xl">
+                 <h2 class="text-3xl font-bold text-center mb-8 text-yellow-300">Bài Học Cốt Lõi Cho Dev</h2>
+                 <div class="max-w-2xl mx-auto space-y-4 text-slate-300">
+                    <div class="border-l-4 border-pink-500 pl-4">
+                        <h4 class="font-bold text-white">Kiến trúc Server Toàn Quyền</h4>
+                        <p>Server phải là nguồn chân lý duy nhất (single source of truth). Mọi logic quan trọng về tài nguyên, kỹ năng, sát thương đều phải được tính toán và xác thực ở phía server.</p>
+                    </div>
+                     <div class="border-l-4 border-orange-500 pl-4">
+                        <h4 class="font-bold text-white">Mã Hóa & Bảo Mật Giao Thức</h4>
+                        <p>Mã hóa tài sản game (asset encryption) và bảo mật đường truyền (SSL pinning) là những biện pháp cơ bản và tối quan trọng để chống lại việc trích xuất dữ liệu và tấn công giả mạo.</p>
+                    </div>
+                     <div class="border-l-4 border-lime-500 pl-4">
+                        <h4 class="font-bold text-white">Vòng Lặp Gameplay Là Vua</h4>
+                        <p>Một vòng lặp gameplay hấp dẫn, kết hợp với hệ thống tiến trình và phần thưởng hợp lý, là chìa khóa để giữ chân người chơi lâu dài. Đây là bài học có thể áp dụng cho mọi thể loại game.</p>
+                    </div>
+                 </div>
+            </section>
+        </main>
+        
+        <footer class="text-center mt-12 pt-8 border-t border-slate-300">
+            <p class="text-sm text-slate-500">Infographic được tạo cho mục đích nghiên cứu và học thuật. DC Unchained và các nhân vật liên quan là tài sản của Warner Bros. và DC Comics.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const FONT_COLOR = '#1E293B';
+            Chart.defaults.font.family = "'Inter', sans-serif";
+            Chart.defaults.font.weight = '600';
+            Chart.defaults.color = FONT_COLOR;
+
+            const tooltipTitleCallback = (tooltipItems) => {
+                const item = tooltipItems[0];
+                let label = item.chart.data.labels[item.dataIndex];
+                if (Array.isArray(label)) {
+                    return label.join(' ');
+                }
+                return label;
+            };
+
+            const processLabels = (labels) => {
+                return labels.map(label => {
+                    if (label.length > 16) {
+                        const words = label.split(' ');
+                        const newLabel = [];
+                        let line = '';
+                        words.forEach(word => {
+                            if ((line + word).length > 16) {
+                                newLabel.push(line.trim());
+                                line = '';
+                            }
+                            line += `${word} `;
+                        });
+                        newLabel.push(line.trim());
+                        return newLabel;
+                    }
+                    return label;
+                });
+            };
+
+            const effortCtx = document.getElementById('effortChart').getContext('2d');
+            new Chart(effortCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Client-Side', 'Server & Mạng', ['Data Layer &', 'Đồng bộ hóa'], 'Gameplay & Kinh Tế', 'Vận hành & Bảo mật'],
+                    datasets: [{
+                        label: 'Mức độ phức tạp',
+                        data: [8, 9.5, 7, 7.5, 8.5],
+                        backgroundColor: '#F97316',
+                        borderColor: '#1E293B',
+                        borderWidth: 2,
+                        borderRadius: 4,
+                        barThickness: 30,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 10,
+                            grid: { color: 'rgba(254, 249, 195, 0.2)' },
+                            ticks: { color: '#FEF9C3' }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { color: '#FEF9C3', font: { size: 14 } }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: { title: tooltipTitleCallback },
+                            backgroundColor: '#1E293B',
+                            titleColor: '#FEF9C3',
+                            bodyColor: '#FEF9C3',
+                            padding: 12,
+                            cornerRadius: 6,
+                        }
+                    }
+                }
+            });
+
+            const gameplayCtx = document.getElementById('gameplayLoopChart').getContext('2d');
+            new Chart(gameplayCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Chiến đấu (PvE/PvP)', 'Farm tài nguyên', 'Nâng cấp anh hùng', 'Tham gia sự kiện'],
+                    datasets: [{
+                        label: 'Vòng lặp Gameplay',
+                        data: [40, 25, 25, 10],
+                        backgroundColor: [
+                            '#EC4899', // pink-500
+                            '#F97316', // orange-500
+                            '#84CC16', // lime-500
+                            '#FACC15', // yellow-400
+                        ],
+                        borderColor: '#FEF9C3',
+                        borderWidth: 5,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: { size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: { title: tooltipTitleCallback },
+                            backgroundColor: '#1E293B',
+                            padding: 12,
+                            cornerRadius: 6,
+                        }
+                    }
+                }
+            });
+
+            const aiCheatBtn = document.getElementById('ai-cheat-btn');
+            const aiEconomyBtn = document.getElementById('ai-economy-btn');
+            const aiRetentionBtn = document.getElementById('ai-retention-btn');
+            const aiResponseEl = document.getElementById('ai-response');
+            const aiLoader = document.getElementById('ai-loader');
+            const aiPlaceholder = document.getElementById('ai-placeholder');
+
+            const prompts = {
+                cheat: `Với vai trò là một chuyên gia bảo mật cho game mobile, hãy phân tích và đề xuất 3 chiến lược chống gian lận (anti-cheat) sáng tạo và hiệu quả cho một game hành động-nhập vai (ARPG) như DC Unchained. Tập trung vào các giải pháp vừa mạnh mẽ về mặt kỹ thuật, vừa không ảnh hưởng tiêu cực đến trải nghiệm của người chơi chân chính.\n\nTrình bày dưới dạng danh sách markdown, mỗi mục giải thích rõ:\n1. **Tên chiến lược.**\n2. **Cách thức hoạt động.**\n3. **Tại sao nó lại phù hợp với game ARPG.**`,
+                economy: `Với vai trò là một nhà thiết kế kinh tế game (Game Economy Designer), hãy đề xuất 3 chiến lược để tối ưu hóa và cân bằng hệ thống kinh tế trong một game ARPG như DC Unchained. Mục tiêu là tạo ra một nền kinh tế bền vững, khuyến khích người chơi tương tác và chi tiêu hợp lý mà không tạo cảm giác "pay-to-win".\n\nTrình bày dưới dạng danh sách markdown, mỗi mục giải thích rõ:\n1. **Tên chiến lược.**\n2. **Mô tả cách triển khai.**\n3. **Tác động tích cực đến người chơi và doanh thu.**`,
+                retention: `Với vai trò là một nhà quản lý sản phẩm game (Game Product Manager), hãy đề xuất 3 chiến lược độc đáo để tăng tỷ lệ giữ chân người chơi (player retention) trong tuần đầu tiên cho một game ARPG như DC Unchained. Tránh các đề xuất quá chung chung như "đăng nhập hàng ngày".\n\nTrình bày dưới dạng danh sách markdown, mỗi mục giải thích rõ:\n1. **Tên chiến lược/tính năng.**\n2. **Cách thức hoạt động và triển khai trong game.**\n3. **Lý do tại sao nó tạo ra sự gắn kết sớm cho người chơi.**`
+            };
+
+            const callGeminiAPI = async (prompt) => {
+                aiPlaceholder.classList.add('hidden');
+                aiResponseEl.textContent = '';
+                aiLoader.classList.remove('hidden');
+
+                const apiKey = ""; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                };
+
+                let response;
+                let retries = 3;
+                let delay = 1000;
+
+                while (retries > 0) {
+                    try {
+                        response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (response.ok) {
+                            const result = await response.json();
+                            const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                            if (text) {
+                                aiLoader.classList.add('hidden');
+                                aiResponseEl.textContent = text;
+                            } else {
+                                throw new Error("Không tìm thấy nội dung trong phản hồi.");
+                            }
+                            return;
+                        } else {
+                             throw new Error(`Yêu cầu API thất bại với mã trạng thái ${response.status}`);
+                        }
+
+                    } catch (error) {
+                        console.error("Lỗi khi gọi API:", error);
+                        retries--;
+                        if (retries === 0) {
+                             aiLoader.classList.add('hidden');
+                             aiResponseEl.textContent = "Đã xảy ra lỗi khi kết nối với AI. Vui lòng thử lại sau.";
+                             return;
+                        }
+                        await new Promise(res => setTimeout(res, delay));
+                        delay *= 2;
+                    }
+                }
+            };
+
+            aiCheatBtn.addEventListener('click', () => callGeminiAPI(prompts.cheat));
+            aiEconomyBtn.addEventListener('click', () => callGeminiAPI(prompts.economy));
+            aiRetentionBtn.addEventListener('click', () => callGeminiAPI(prompts.retention));
+        });
+    </script>
+</body>
+</html>
+
